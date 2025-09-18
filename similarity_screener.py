@@ -159,3 +159,5 @@ maccs_fp2 = MACCSkeys.GenMACCSKeys(molecule2)
 DataStructs.TanimotoSimilarity(maccs_fp1, maccs_fp2)
 #计算两个相同分子之间的Tanimoto系数, 这个结果应是1
 DataStructs.TanimotoSimilarity(maccs_fp1, maccs_fp1)
+
+#test
