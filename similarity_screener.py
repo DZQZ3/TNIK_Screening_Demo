@@ -2,7 +2,9 @@ from pathlib import Path
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import io
 from rdkit import Chem, DataStructs
+from PIL import Image
 from rdkit.Chem import (
     PandasTools,
     Draw,
@@ -110,8 +112,8 @@ except Exception as e:
 # 二維分子描述子：MACCS指紋
 print("\n=== 生成MACCS指纹 ===")
 try:
-    molecule = molecules["ROMol"][0]# 选择第0号分子作为示例
-    print(f"示例分子: {molecules['name'][0]}")
+    molecule = molecules["ROMol"][8]# 选择第8号INS 018_055分子作为示例
+    print(f"示例分子: {molecules['name'][8]}")
 
     # 生成MACCS指紋
     maccs_fp = MACCSkeys.GenMACCSKeys(molecule)
@@ -145,19 +147,71 @@ try:
 except Exception as e:
     print(f"生成摩根指纹时出错: {e}")
 
-print("\n=== 分子相似性计算 ===")
-#范例分子对：将两个 MACCS 指纹与 Tanimoto 相似性进行比较
-# Example molecules
-molecule1 = molecules["ROMol"][0]
-molecule2 = molecules["ROMol"][1]
 
-# Example fingerprints
-maccs_fp1 = MACCSkeys.GenMACCSKeys(molecule1)
-maccs_fp2 = MACCSkeys.GenMACCSKeys(molecule2)
+#MACCS fingerprints: Tanimoto similarity and Dice similarity
+print("\n=== MACCS 指纹分子相似性计算 ===")
+query_molecule_index = 8# 明确指定查询分子的索引
+maccs_query = molecules.loc[query_molecule_index, "maccs"]
+maccs_list = molecules["maccs"].tolist()
 
-#计算两个不同分子之间的Tanimoto系数
-DataStructs.TanimotoSimilarity(maccs_fp1, maccs_fp2)
-#计算两个相同分子之间的Tanimoto系数, 这个结果应是1
-DataStructs.TanimotoSimilarity(maccs_fp1, maccs_fp1)
+molecules["tanimoto_maccs"] = DataStructs.BulkTanimotoSimilarity(maccs_query, maccs_list)
+molecules["dice_maccs"] = DataStructs.BulkDiceSimilarity(maccs_query, maccs_list)
 
-#test
+
+
+#Morgan fingerprints: Tanimoto similarity and Dice similarity
+print("\n=== Morgan 指纹分子相似性计算 ===")
+# Define molecule query and list
+query_molecule_index = 8  # 明确指定查询分子的索引
+molecule_query = molecules.loc[query_molecule_index, "morgan"]
+molecule_list = molecules["morgan"].to_list()
+
+# 计算相似度值
+try:
+    molecules["tanimoto_morgan"] = DataStructs.BulkTanimotoSimilarity(molecule_query, molecule_list)
+    molecules["dice_morgan"] = DataStructs.BulkDiceSimilarity(molecule_query, molecule_list)
+except Exception as e:
+    print(f"计算相似度时出错: {e}")
+
+# 创建预览数据框，不修改原始数据
+preview = (
+    molecules
+    .sort_values("tanimoto_morgan", ascending=False)
+    .reset_index(drop=False)  # 如果不需保留原索引，使用drop=True
+    [["name", "tanimoto_morgan", "dice_morgan", "tanimoto_maccs", "dice_maccs"]]
+    # 如果确实计算了MACCS相似度，可以添加这些列
+    # 否则应该移除对tanimoto_maccs和dice_maccs的引用
+)
+
+# 添加格式化的相似度值
+preview_display = preview.copy()
+preview_display["tanimoto_morgan"] = preview_display["tanimoto_morgan"].apply(lambda x: f"{x:.3f}")
+preview_display["dice_morgan"] = preview_display["dice_morgan"].apply(lambda x: f"{x:.3f}")
+
+print("相似度排序结果:")
+print(preview_display.to_string(index=False))
+
+# 绘制分子图像
+# 生成基于相似度排名的分子网格图像（同时显示Tanimoto和Dice相似度）
+try:
+    # 按相似度排序
+    ranked_molecules = molecules.sort_values("tanimoto_morgan", ascending=False)
+
+    img = Draw.MolsToGridImage(
+        ranked_molecules["ROMol"].tolist(),
+        molsPerRow=3,  # 每行3个分子
+        subImgSize=(450, 150),  # 图像大小
+        legends=[
+            f"{row['name']}\nTanimoto: {row['tanimoto_morgan']:.3f}\nDice: {row['dice_morgan']:.3f}"
+            for _, row in ranked_molecules.iterrows()
+        ],
+    )
+
+    # 保存图像到文件
+    image_path = DATA / "molecule_similarity_ranking_full.png"
+    img.save(image_path)
+    print(f"相似度排名分子图像已保存至: {image_path}")
+
+except Exception as e:
+    print(f"生成相似度排名分子图像时出错: {e}")
+
