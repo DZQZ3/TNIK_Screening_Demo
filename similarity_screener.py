@@ -194,63 +194,38 @@ if specs_data is not None:
     print(f"已加载 {len(molecules)} 个 Specs 分子")
 
 else:
-    print("\nSpecs_CleanD008 数据库未找到或无法读取，使用原有的测试分子进行分析")
+    print("\nSpecs_CleanD008 数据库未找到或无法读取")
 
-    # 原有的测试分子数据
-    molecule_smiles = [
-        "CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O",
-        "CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=C(C=C3)O)N)C(=O)O)C",
-        "C1=COC(=C1)CNC2=CC(=C(C=C2C(=O)O)S(=O)(=O)N)Cl",
-        "CCCCCCCCCCCC(=O)OCCOC(=O)CCCCCCCCCCC",
-        "C1NC2=CC(=C(C=C2S(=O)(=O)N1)S(=O)(=O)N)Cl",
-        "CC1=C(C(CCC1)(C)C)C=CC(=CC=CC(=CC(=O)O)C)C",
-        "CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O",
-        "CC1C(CC(=O)C2=C1C=CC=C2O)C(=O)O",
-        "CC(C)N1C=NC(=C1C1=NC=C(N1)C(=O)NC1=CC=C(C=C1)N1CCN(C)CC1)C1=CC=C(F)C=C1",
-    ]
 
-    molecule_names = [
-        "Doxycycline", "Amoxicilline", "Furosemide", "Glycol dilaurate",
-        "Hydrochlorothiazide", "Isotretinoin", "Tetracycline",
-        "Hemi-cycline D", "INS 018_055",
-    ]
-
-    # 创建分子数据框
-    molecules = pd.DataFrame({"smiles": molecule_smiles, "name": molecule_names})
-    PandasTools.AddMoleculeColumnToFrame(molecules, smilesCol="smiles")
-
-    # 计算三种指纹的相似度
-    query_smiles = "CC(C)N1C=NC(=C1C1=NC=C(N1)C(=O)NC1=CC=C(C=C1)N1CCN(C)CC1)C1=CC=C(F)C=C1"
-    molecules = calculate_fingerprint_similarities(molecules, query_smiles)
 
 # =============================================================================
 # 可视化部分
 # =============================================================================
 
-print("\n=== 生成分子图像 ===")
-try:
-    # 按综合相似度排序
-    ranked_molecules = molecules.sort_values("composite_similarity", ascending=False)
-
-    # 只显示前12个分子以避免图像过大
-    display_molecules = ranked_molecules.head(12)
-
-    img = Draw.MolsToGridImage(
-        display_molecules["ROMol"].tolist(),
-        molsPerRow=4,
-        subImgSize=(300, 200),
-        legends=[
-            f"{row['name']}\nMorgan: {row['tanimoto_morgan']:.3f}\nMACCS: {row['tanimoto_maccs']:.3f}\nRDKit: {row['tanimoto_rdkit']:.3f}"
-            for _, row in display_molecules.iterrows()
-        ],
-    )
-
-    image_path = DATA / "specs_similarity_grid.png"
-    img.save(image_path)
-    print(f"分子图像已保存至: {image_path}")
-
-except Exception as e:
-    print(f"生成分子图像时出错: {e}")
+# print("\n=== 生成分子图像 ===")
+# try:
+#     # 按综合相似度排序
+#     ranked_molecules = molecules.sort_values("composite_similarity", ascending=False)
+#
+#     # 只显示前12个分子以避免图像过大
+#     display_molecules = ranked_molecules.head(12)
+#
+#     img = Draw.MolsToGridImage(
+#         display_molecules["ROMol"].tolist(),
+#         molsPerRow=4,
+#         subImgSize=(300, 200),
+#         legends=[
+#             f"{row['name']}\nMorgan: {row['tanimoto_morgan']:.3f}\nMACCS: {row['tanimoto_maccs']:.3f}\nRDKit: {row['tanimoto_rdkit']:.3f}"
+#             for _, row in display_molecules.iterrows()
+#         ],
+#     )
+#
+#     image_path = DATA / "specs_similarity_grid.png"
+#     img.save(image_path)
+#     print(f"分子图像已保存至: {image_path}")
+#
+# except Exception as e:
+#     print(f"生成分子图像时出错: {e}")
 
 
 # =============================================================================
