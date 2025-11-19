@@ -128,7 +128,7 @@ def calculate_fingerprint_similarities(data, query_smiles, query_name="INS 018_0
     fpg = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
     morgan_query = fpg.GetFingerprint(query_mol)
 
-    # RDKit 拓扑指纹 - 老师要求的额外指纹
+    # RDKit 拓扑指纹
     rdkit_query = Chem.RDKFingerprint(query_mol)
 
     # 为所有分子计算三种指纹

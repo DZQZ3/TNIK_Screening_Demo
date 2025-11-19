@@ -46,9 +46,10 @@ def filter_high_similarity_molecules(data):
     similarity_threshold = 0.6
 
 
-    morgan_condition = data['tanimoto_morgan'] > similarity_threshold
-    maccs_condition = data['tanimoto_maccs'] > similarity_threshold
-    rdkit_condition = data['tanimoto_rdkit'] > similarity_threshold
+    morgan_condition = (data['tanimoto_morgan'] > similarity_threshold) | (data['dice_morgan'] > similarity_threshold)
+    maccs_condition = (data['tanimoto_maccs'] > similarity_threshold) | (data['dice_maccs'] > similarity_threshold)
+    rdkit_condition = (data['tanimoto_rdkit'] > similarity_threshold) | (data['dice_rdkit'] > similarity_threshold)
+
 
     high_similarity_mask = morgan_condition | maccs_condition | rdkit_condition
 
